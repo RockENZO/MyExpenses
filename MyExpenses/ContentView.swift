@@ -10,7 +10,7 @@ import SwiftUICharts
 
 struct ContentView: View {
     @EnvironmentObject var transactionListVM: TransactionListViewModel
-//    var demoData: [Double] = [8, 2, 4, 6, 12, 9, 2]
+    @State private var showingAddExpenseView = false
     
     var body: some View {
         NavigationView {
@@ -54,9 +54,29 @@ struct ContentView: View {
                         .foregroundStyle(Color.icon)
                 }
             }
+            .overlay(
+                Button(action: {
+                    showingAddExpenseView.toggle()
+                }) {
+                    Image(systemName: "plus")
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                        .shadow(radius: 10)
+                }
+                .padding()
+                .position(x: UIScreen.main.bounds.width - 50, y: UIScreen.main.bounds.height - 150)
+            )
         }
         .navigationViewStyle(.stack)
         .accentColor(.primary)
+        .sheet(isPresented: $showingAddExpenseView) {
+            AddExpenseView()
+                .environmentObject(transactionListVM)
+        }
     }
 }
 

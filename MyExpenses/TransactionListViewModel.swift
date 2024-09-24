@@ -13,12 +13,17 @@ typealias TransactionGroup = OrderedDictionary<String, [Transaction]>
 typealias TransactionPrefixSum = [(String, Double)]
 
 final class TransactionListViewModel: ObservableObject {
-    @Published var transactions: [Transaction] = []
+    @Published var transactions: [Transaction] = [] {
+        didSet {
+            saveTransactions()
+        }
+    }
     
     // To store cancellables for Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
     
     init(){
+        loadTransactions()
         getTransactions()
     }
     
@@ -47,10 +52,27 @@ final class TransactionListViewModel: ObservableObject {
                 }
             } receiveValue: { [weak self] result in
                 self?.transactions = result
-
             }
             .store(in: &cancellables)
     }
+    
+    func addTransaction(_ transaction: Transaction) {
+        transactions.insert(transaction, at: 0)
+    }
+    
+    func saveTransactions() {
+        if let encoded = try? JSONEncoder().encode(transactions) {
+            UserDefaults.standard.set(encoded, forKey: "transactions")
+        }
+    }
+    
+    func loadTransactions() {
+        if let savedTransactions = UserDefaults.standard.data(forKey: "transactions"),
+           let decodedTransactions = try? JSONDecoder().decode([Transaction].self, from: savedTransactions) {
+            transactions = decodedTransactions
+        }
+    }
+    
     func groupTransactionsByMonth() -> TransactionGroup {
         guard !transactions.isEmpty else { return [:] }
         let groupedTransactions = TransactionGroup(grouping: transactions){ $0.month }
